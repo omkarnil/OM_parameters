@@ -24,7 +24,7 @@ def convert_to_days(value):
     }
     if value in conversions:
         return conversions[value]
-    match = re.match(r'(\d+)\s*(days|months|years)', value)
+    match = re.match(r'^(\d+)\s*(days|months|years)$', value)
     if match:
         number, unit = match.groups()
         return int(number) * unit_conversion[unit]
@@ -92,10 +92,10 @@ else:
     st.markdown('<div class="param-container">', unsafe_allow_html=True)
     st.write(f'### Parameters for OM Code: {om_code}')
     max_values = {
-        "Maximum Frequency": filtered_df['Maximum Frequency'].values[0] if pd.notna(filtered_df['Maximum Frequency'].values[0]) else '0',
-        "Maximum FI Data Range": filtered_df['Maximum FI Data Range'].values[0] if pd.notna(filtered_df['Maximum FI Data Range'].values[0]) else '0',
-        "Maximum Consent Validity": filtered_df['Maximum Consent Validity'].values[0] if pd.notna(filtered_df['Maximum Consent Validity'].values[0]) else '0',
-        "Maximum Data Life": filtered_df['Maximum Data Life'].values[0] if pd.notna(filtered_df['Maximum Data Life'].values[0]) else '0'
+        "Maximum Frequency": convert_to_days(filtered_df['Maximum Frequency'].values[0]) if pd.notna(filtered_df['Maximum Frequency'].values[0]) else 0,
+        "Maximum FI Data Range": convert_to_days(filtered_df['Maximum FI Data Range'].values[0]) if pd.notna(filtered_df['Maximum FI Data Range'].values[0]) else 0,
+        "Maximum Consent Validity": convert_to_days(filtered_df['Maximum Consent Validity'].values[0]) if pd.notna(filtered_df['Maximum Consent Validity'].values[0]) else 0,
+        "Maximum Data Life": convert_to_days(filtered_df['Maximum Data Life'].values[0]) if pd.notna(filtered_df['Maximum Data Life'].values[0]) else 0
     }
     for col, value in filtered_df.iloc[0].items():
         st.markdown(f'<div class="param"><span class="param-title">{col}:</span> {value}</div>', unsafe_allow_html=True)
@@ -125,9 +125,9 @@ else:
         for key, input_value in input_values.items():
             if input_value:
                 input_days = convert_to_days(input_value)
-                max_days = convert_to_days(max_values[key])
+                max_days = max_values[key]
                 if input_days > max_days:
-                    results.append(f"{key} exceeded: {input_value} > {max_values[key]}")
+                    results.append(f"{key} exceeded: {input_value} > {filtered_df[key].values[0]}")
         
         if results:
             for res in results:
