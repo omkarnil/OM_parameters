@@ -5,31 +5,29 @@ import uuid
 import json
 import os
 
-# Load the Excel sheet once
-excel_path = 'Consent Paramters.xlsx'
-df = pd.read_excel(excel_path)
-json_path = 'consents.json'
+# Load data with progress indicator
+with st.spinner('Loading data...'):
+    excel_path = 'Consent Paramters.xlsx'
+    json_path = 'consents.json'
 
-# Load existing consents
-if os.path.exists(json_path):
-    with open(json_path, 'r') as file:
-        consent_list = json.load(file)
-else:
-    consent_list = []
+    try:
+        df = pd.read_excel(excel_path)
+    except FileNotFoundError:
+        st.error(f"Excel file '{excel_path}' not found.")
+        st.stop()
+
+    if os.path.exists(json_path):
+        with open(json_path, 'r') as file:
+            consent_list = json.load(file)
+    else:
+        consent_list = []
 
 # Conversion factors
-unit_conversion = {
-    'days': 1,
-    'months': 30,
-    'years': 365
-}
+unit_conversion = {'days': 1, 'months': 30, 'years': 365}
 
 def convert_to_days(value):
     value = str(value).strip().lower()
-    conversions = {
-        'na': 0,
-        'coterminous with loan tenure': 10 * unit_conversion['years']
-    }
+    conversions = {'na': 0, 'coterminous with loan tenure': 10 * unit_conversion['years']}
     if value in conversions:
         return conversions[value]
     match = re.match(r'^(\d+)\s*(days|months|years)$', value)
@@ -38,55 +36,8 @@ def convert_to_days(value):
         return int(number) * unit_conversion[unit]
     return 0
 
-# Custom CSS to enhance appearance
-st.markdown("""
-    <style>
-        .stApp {
-            background-color: #e3f2fd;
-            color: #333;
-            font-family: 'Arial', sans-serif;
-        }
-        .main-title {
-            color: #1976d2;
-            text-align: center;
-            font-size: 42px;
-            margin: 20px 0 40px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .param-container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            width: 80%;
-        }
-        .param {
-            font-size: 18px;
-            color: #424242;
-            margin: 8px 0;
-        }
-        .param-title {
-            font-weight: 600;
-            color: #1976d2;
-        }
-        .exceed {
-            color: #d32f2f;
-            font-weight: bold;
-        }
-        .footer {
-            text-align: center;
-            color: #616161;
-            font-size: 14px;
-            margin-top: 40px;
-            padding: 10px 0;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # Streamlit app title
-st.markdown('<h1 class="main-title">OM Code Parameter Viewer</h1>', unsafe_allow_html=True)
+st.title('OM Code Parameter Viewer')
 
 # Button Selection
 option = st.radio("Choose an action:", ('Check Limit', 'Create Consent', 'Delete Consent'))
@@ -99,11 +50,8 @@ filtered_df = df[df['OM Code'].astype(str) == om_code]
 if filtered_df.empty:
     st.error('Invalid OM Code selected. No data found.')
 else:
-    st.markdown('<div class="param-container">', unsafe_allow_html=True)
     st.write(f'### Parameters for OM Code: {om_code}')
-    for col, value in filtered_df.iloc[0].items():
-        st.markdown(f'<div class="param"><span class="param-title">{col}:</span> {value}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.table(filtered_df)
 
     if option == 'Check Limit':
         st.write("### Check Limits")
@@ -121,7 +69,6 @@ else:
                 "Maximum Consent Validity": convert_to_days(filtered_df['Maximum Consent Validity'].values[0]),
                 "Maximum Data Life": convert_to_days(filtered_df['Maximum Data Life'].values[0])
             }
-
             input_values = {
                 "Maximum Frequency": max_frequency,
                 "Maximum FI Data Range": max_fi_data_range,
@@ -133,15 +80,14 @@ else:
             for key, input_value in input_values.items():
                 if input_value:
                     input_days = convert_to_days(input_value)
+                    if input_days == 0 and input_value.lower() != 'na':
+                        st.warning(f"Invalid format for {key}: {input_value}")
+                        continue
                     max_days = max_values[key]
                     if input_days > max_days:
-                        results.append(f"{key} exceeded: {input_days} days > {max_days} days")
-
-            if results:
-                for res in results:
-                    st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
-            else:
-                st.success("All values are within limits.")
+                        st.error(f"{key} exceeded: {input_days} days > {max_days} days")
+                    else:
+                        st.success(f"{key} is within limit.")
 
     elif option == 'Create Consent':
         st.write("### Create Consent")
@@ -180,11 +126,10 @@ else:
                 json.dump(consent_list, file, indent=4)
             st.success(f"Consent ID {consent_to_delete} deleted successfully.")
 
-# Display consent list
+# Display consent list with improved visibility
 if consent_list:
     st.write("### Consent List")
-    st.write(pd.DataFrame(consent_list))
+    st.dataframe(pd.DataFrame(consent_list))
 
 # Footer
-st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
-
+st.write("Created with ❤️ by bored Omkarni")
