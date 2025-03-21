@@ -91,7 +91,7 @@ st.markdown("""
 st.markdown('<h1 class="main-title">OM Code Parameter Viewer</h1>', unsafe_allow_html=True)
 
 # Button Selection
-option = st.radio("Choose an action:", ('Check Limit', 'Create Consent', 'Delete Consent'))
+option = st.radio("Choose an action:", ('Check Limit', 'Create Consent'))
 
 # Select OM Code
 om_codes = df['OM Code'].astype(str).unique()
@@ -174,21 +174,19 @@ else:
                     json.dump(consent_list, file, indent=4)
                 st.success(f"Consent Created Successfully! Consent ID: {consent_id}")
 
-    elif option == 'Delete Consent':
-        st.write("### Delete Consent")
-        consent_ids = [consent['Consent ID'] for consent in consent_list]
-        consent_to_delete = st.selectbox("Select Consent ID to Delete", consent_ids)
-        if st.button("Delete Consent"):
-            with st.spinner('Deleting consent...'):
-                consent_list = [c for c in consent_list if c['Consent ID'] != consent_to_delete]
-                with open(json_path, 'w') as file:
-                    json.dump(consent_list, file, indent=4)
-                st.success(f"Consent ID {consent_to_delete} deleted successfully.")
-
 # Display consent list
 if consent_list:
     st.write("### Consent List")
-    st.dataframe(pd.DataFrame(consent_list))
+    consent_df = pd.DataFrame(consent_list)
+    for i, row in consent_df.iterrows():
+        st.write(row.to_dict())
+        if st.button(f"Delete {row['Consent ID']}"):
+            if st.confirm(f"Are you sure you want to delete Consent ID {row['Consent ID']}?"):
+                with st.spinner('Deleting consent...'):
+                    consent_list = [c for c in consent_list if c['Consent ID'] != row['Consent ID']]
+                    with open(json_path, 'w') as file:
+                        json.dump(consent_list, file, indent=4)
+                    st.experimental_rerun()
 
 # Footer
 st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
