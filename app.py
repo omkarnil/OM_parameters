@@ -188,7 +188,7 @@ else:
 # Display consent list
 if consent_list:
     st.write("### Consent List")
-    st.write(pd.DataFrame(consent_list))
+    st.dataframe(pd.DataFrame(consent_list))
 
 # Footer
 st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
