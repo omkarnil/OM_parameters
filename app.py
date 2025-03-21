@@ -81,7 +81,7 @@ st.markdown("""
 st.markdown('<h1 class="main-title">OM Code Parameter Viewer</h1>', unsafe_allow_html=True)
 
 # Button Selection
-option = st.radio("Choose an action:", ('Check Limit', 'Create Consent'))
+option = st.radio("Choose an action:", ('Check Limit', 'Create Consent', 'Delete Consent'))
 
 # Select OM Code
 om_codes = df['OM Code'].astype(str).unique()
@@ -160,10 +160,18 @@ else:
             })
             st.success(f"Consent Created Successfully! Consent ID: {consent_id}")
 
+    elif option == 'Delete Consent':
+        st.write("### Delete Consent")
+        consent_ids = [consent['Consent ID'] for consent in consent_list]
+        consent_to_delete = st.selectbox("Select Consent ID to Delete", consent_ids)
+        if st.button("Delete Consent"):
+            consent_list = [c for c in consent_list if c['Consent ID'] != consent_to_delete]
+            st.success(f"Consent ID {consent_to_delete} deleted successfully.")
+
 # Display consent list
 if consent_list:
     st.write("### Consent List")
     st.write(pd.DataFrame(consent_list))
 
 # Footer
-st.markdown('<div class="footer">Created with ❤️ by Omkarni</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
