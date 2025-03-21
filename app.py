@@ -7,15 +7,17 @@ import os
 
 # Load the Excel sheet once
 excel_path = 'Consent Paramters.xlsx'
-df = pd.read_excel(excel_path)
+with st.spinner('Loading data...'):
+    df = pd.read_excel(excel_path)
 json_path = 'consents.json'
 
 # Load existing consents
-if os.path.exists(json_path):
-    with open(json_path, 'r') as file:
-        consent_list = json.load(file)
-else:
-    consent_list = []
+with st.spinner('Loading consents...'):
+    if os.path.exists(json_path):
+        with open(json_path, 'r') as file:
+            consent_list = json.load(file)
+    else:
+        consent_list = []
 
 # Conversion factors
 unit_conversion = {
@@ -115,33 +117,34 @@ else:
             submit_check = st.form_submit_button(label='Check Limit')
 
         if submit_check:
-            max_values = {
-                "Maximum Frequency": convert_to_days(filtered_df['Maximum Frequency'].values[0]),
-                "Maximum FI Data Range": convert_to_days(filtered_df['Maximum FI Data Range'].values[0]),
-                "Maximum Consent Validity": convert_to_days(filtered_df['Maximum Consent Validity'].values[0]),
-                "Maximum Data Life": convert_to_days(filtered_df['Maximum Data Life'].values[0])
-            }
+            with st.spinner('Checking limits...'):
+                max_values = {
+                    "Maximum Frequency": convert_to_days(filtered_df['Maximum Frequency'].values[0]),
+                    "Maximum FI Data Range": convert_to_days(filtered_df['Maximum FI Data Range'].values[0]),
+                    "Maximum Consent Validity": convert_to_days(filtered_df['Maximum Consent Validity'].values[0]),
+                    "Maximum Data Life": convert_to_days(filtered_df['Maximum Data Life'].values[0])
+                }
 
-            input_values = {
-                "Maximum Frequency": max_frequency,
-                "Maximum FI Data Range": max_fi_data_range,
-                "Maximum Consent Validity": max_consent_validity,
-                "Maximum Data Life": max_data_life
-            }
+                input_values = {
+                    "Maximum Frequency": max_frequency,
+                    "Maximum FI Data Range": max_fi_data_range,
+                    "Maximum Consent Validity": max_consent_validity,
+                    "Maximum Data Life": max_data_life
+                }
 
-            results = []
-            for key, input_value in input_values.items():
-                if input_value:
-                    input_days = convert_to_days(input_value)
-                    max_days = max_values[key]
-                    if input_days > max_days:
-                        results.append(f"{key} exceeded: {input_days} days > {max_days} days")
+                results = []
+                for key, input_value in input_values.items():
+                    if input_value:
+                        input_days = convert_to_days(input_value)
+                        max_days = max_values[key]
+                        if input_days > max_days:
+                            results.append(f"{key} exceeded: {input_days} days > {max_days} days")
 
-            if results:
-                for res in results:
-                    st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
-            else:
-                st.success("All values are within limits.")
+                if results:
+                    for res in results:
+                        st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
+                else:
+                    st.success("All values are within limits.")
 
     elif option == 'Create Consent':
         st.write("### Create Consent")
@@ -155,30 +158,32 @@ else:
             submit_consent = st.form_submit_button(label='Create Consent')
 
         if submit_consent:
-            consent_id = str(uuid.uuid4())
-            consent_list.append({
-                'Consent ID': consent_id,
-                'OM Code': om_code,
-                'Purpose Code': purpose_code,
-                'Purpose Text': purpose_text,
-                'Maximum Frequency': max_frequency,
-                'Maximum FI Data Range': max_fi_data_range,
-                'Maximum Consent Validity': max_consent_validity,
-                'Maximum Data Life': max_data_life
-            })
-            with open(json_path, 'w') as file:
-                json.dump(consent_list, file, indent=4)
-            st.success(f"Consent Created Successfully! Consent ID: {consent_id}")
+            with st.spinner('Creating consent...'):
+                consent_id = str(uuid.uuid4())
+                consent_list.append({
+                    'Consent ID': consent_id,
+                    'OM Code': om_code,
+                    'Purpose Code': purpose_code,
+                    'Purpose Text': purpose_text,
+                    'Maximum Frequency': max_frequency,
+                    'Maximum FI Data Range': max_fi_data_range,
+                    'Maximum Consent Validity': max_consent_validity,
+                    'Maximum Data Life': max_data_life
+                })
+                with open(json_path, 'w') as file:
+                    json.dump(consent_list, file, indent=4)
+                st.success(f"Consent Created Successfully! Consent ID: {consent_id}")
 
     elif option == 'Delete Consent':
         st.write("### Delete Consent")
         consent_ids = [consent['Consent ID'] for consent in consent_list]
         consent_to_delete = st.selectbox("Select Consent ID to Delete", consent_ids)
         if st.button("Delete Consent"):
-            consent_list = [c for c in consent_list if c['Consent ID'] != consent_to_delete]
-            with open(json_path, 'w') as file:
-                json.dump(consent_list, file, indent=4)
-            st.success(f"Consent ID {consent_to_delete} deleted successfully.")
+            with st.spinner('Deleting consent...'):
+                consent_list = [c for c in consent_list if c['Consent ID'] != consent_to_delete]
+                with open(json_path, 'w') as file:
+                    json.dump(consent_list, file, indent=4)
+                st.success(f"Consent ID {consent_to_delete} deleted successfully.")
 
 # Display consent list
 if consent_list:
