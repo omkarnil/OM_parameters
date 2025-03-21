@@ -34,7 +34,7 @@ def convert_to_days(value):
     }
     if value in conversions:
         return conversions[value]
-    match = re.match(r'^(\d+)\s*(days|months|years)$', value)
+    match = re.match(r'^\d+\s*(days|months|years)$', value)
     if match:
         number, unit = match.groups()
         return int(number) * unit_conversion[unit]
@@ -175,11 +175,11 @@ else:
                 st.success(f"Consent Created Successfully! Consent ID: {consent_id}")
 
 # Display consent list
-if consent_list:
+df_consent = pd.DataFrame(consent_list)
+if not df_consent.empty:
     st.write("### Consent List")
-    consent_df = pd.DataFrame(consent_list)
-    for i, row in consent_df.iterrows():
-        st.write(row.to_dict())
+    for i, row in df_consent.iterrows():
+        st.table(pd.DataFrame([row]))
         if st.button(f"Delete {row['Consent ID']}"):
             if st.confirm(f"Are you sure you want to delete Consent ID {row['Consent ID']}?"):
                 with st.spinner('Deleting consent...'):
