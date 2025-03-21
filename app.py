@@ -40,53 +40,6 @@ def convert_to_days(value):
         return int(number) * unit_conversion[unit]
     return 0
 
-# Custom CSS to enhance appearance
-st.markdown("""
-    <style>
-        .stApp {
-            background-color: #e3f2fd;
-            color: #333;
-            font-family: 'Arial', sans-serif;
-        }
-        .main-title {
-            color: #1976d2;
-            text-align: center;
-            font-size: 42px;
-            margin: 20px 0 40px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .param-container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            width: 80%;
-        }
-        .param {
-            font-size: 18px;
-            color: #424242;
-            margin: 8px 0;
-        }
-        .param-title {
-            font-weight: 600;
-            color: #1976d2;
-        }
-        .exceed {
-            color: #d32f2f;
-            font-weight: bold;
-        }
-        .footer {
-            text-align: center;
-            color: #616161;
-            font-size: 14px;
-            margin-top: 40px;
-            padding: 10px 0;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # Streamlit app title
 st.markdown('<h1 class="main-title">OM Code Parameter Viewer</h1>', unsafe_allow_html=True)
 
@@ -101,11 +54,8 @@ filtered_df = df[df['OM Code'].astype(str) == om_code]
 if filtered_df.empty:
     st.error('Invalid OM Code selected. No data found.')
 else:
-    st.markdown('<div class="param-container">', unsafe_allow_html=True)
     st.write(f'### Parameters for OM Code: {om_code}')
-    for col, value in filtered_df.iloc[0].items():
-        st.markdown(f'<div class="param"><span class="param-title">{col}:</span> {value}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.write(filtered_df)
 
     if option == 'Check Limit':
         st.write("### Check Limits")
@@ -142,7 +92,7 @@ else:
 
                 if results:
                     for res in results:
-                        st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
+                        st.error(res)
                 else:
                     st.success("All values are within limits.")
 
@@ -179,14 +129,16 @@ df_consent = pd.DataFrame(consent_list)
 if not df_consent.empty:
     st.write("### Consent List")
     for i, row in df_consent.iterrows():
-        st.table(pd.DataFrame([row]))
-        if st.button(f"Delete {row['Consent ID']}"):
-            if st.confirm(f"Are you sure you want to delete Consent ID {row['Consent ID']}?"):
-                with st.spinner('Deleting consent...'):
-                    consent_list = [c for c in consent_list if c['Consent ID'] != row['Consent ID']]
-                    with open(json_path, 'w') as file:
-                        json.dump(consent_list, file, indent=4)
-                    st.experimental_rerun()
+        delete_col, _ = st.columns([0.1, 0.9])
+        with delete_col:
+            if st.button(f"Delete", key=f"delete_{row['Consent ID']}"):
+                if st.confirm(f"Are you sure you want to delete Consent ID {row['Consent ID']}?"):
+                    with st.spinner('Deleting consent...'):
+                        consent_list = [c for c in consent_list if c['Consent ID'] != row['Consent ID']]
+                        with open(json_path, 'w') as file:
+                            json.dump(consent_list, file, indent=4)
+                        st.experimental_rerun()
+    st.dataframe(df_consent)
 
 # Footer
 st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
