@@ -190,7 +190,7 @@ if not df_consent.empty:
                     consent_list = [c for c in consent_list if c['Consent ID'] != row['Consent ID']]
                     with open(json_path, 'w') as file:
                         json.dump(consent_list, file, indent=4)
-                    st.experimental_rerun()
+                    st.rerun()
 
 # Footer
 st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
