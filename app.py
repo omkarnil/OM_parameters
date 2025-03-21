@@ -83,63 +83,70 @@ st.markdown('<h1 class="main-title">OM Code Parameter Viewer</h1>', unsafe_allow
 # Button Selection
 option = st.radio("Choose an action:", ('Check Limit', 'Create Consent'))
 
-if option == 'Check Limit':
-    # Select OM Code
-    om_codes = df['OM Code'].astype(str).unique()
-    om_code = st.selectbox('Select OM Code:', om_codes)
+# Select OM Code
+om_codes = df['OM Code'].astype(str).unique()
+om_code = st.selectbox('Select OM Code:', om_codes)
+filtered_df = df[df['OM Code'].astype(str) == om_code]
 
-    # Display details for the selected OM Code
-    filtered_df = df[df['OM Code'].astype(str) == om_code]
-    if filtered_df.empty:
-        st.error('Invalid OM Code selected. No data found.')
-    else:
-        st.markdown('<div class="param-container">', unsafe_allow_html=True)
-        st.write(f'### Parameters for OM Code: {om_code}')
-        for col, value in filtered_df.iloc[0].items():
-            st.markdown(f'<div class="param"><span class="param-title">{col}:</span> {value}</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+if filtered_df.empty:
+    st.error('Invalid OM Code selected. No data found.')
+else:
+    st.markdown('<div class="param-container">', unsafe_allow_html=True)
+    st.write(f'### Parameters for OM Code: {om_code}')
+    for col, value in filtered_df.iloc[0].items():
+        st.markdown(f'<div class="param"><span class="param-title">{col}:</span> {value}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-elif option == 'Create Consent':
-    st.write("### Create Consent")
-    with st.form(key='create_consent_form'):
-        om_code = st.selectbox('Select OM Code:', df['OM Code'].astype(str).unique())
-        purpose_code = st.text_input("Purpose Code")
-        purpose_text = st.text_area("Purpose Text")
-        max_frequency = st.text_input("Maximum Frequency")
-        max_fi_data_range = st.text_input("Maximum FI Data Range")
-        max_consent_validity = st.text_input("Maximum Consent Validity")
-        max_data_life = st.text_input("Maximum Data Life")
-        submit_consent = st.form_submit_button(label='Create Consent')
+    if option == 'Check Limit':
+        st.write("### Check Limits")
+        with st.form(key='check_limit_form'):
+            max_frequency = st.text_input("Maximum Frequency")
+            max_fi_data_range = st.text_input("Maximum FI Data Range")
+            max_consent_validity = st.text_input("Maximum Consent Validity")
+            max_data_life = st.text_input("Maximum Data Life")
+            submit_check = st.form_submit_button(label='Check Limit')
 
-    # Check limits and create consent
-    if submit_consent:
-        filtered_df = df[df['OM Code'].astype(str) == om_code]
-        max_values = {
-            "Maximum Frequency": convert_to_days(filtered_df['Maximum Frequency'].values[0]) if pd.notna(filtered_df['Maximum Frequency'].values[0]) else 0,
-            "Maximum FI Data Range": convert_to_days(filtered_df['Maximum FI Data Range'].values[0]) if pd.notna(filtered_df['Maximum FI Data Range'].values[0]) else 0,
-            "Maximum Consent Validity": convert_to_days(filtered_df['Maximum Consent Validity'].values[0]) if pd.notna(filtered_df['Maximum Consent Validity'].values[0]) else 0,
-            "Maximum Data Life": convert_to_days(filtered_df['Maximum Data Life'].values[0]) if pd.notna(filtered_df['Maximum Data Life'].values[0]) else 0
-        }
-        
-        input_values = {
-            "Maximum Frequency": max_frequency,
-            "Maximum FI Data Range": max_fi_data_range,
-            "Maximum Consent Validity": max_consent_validity,
-            "Maximum Data Life": max_data_life
-        }
+        if submit_check:
+            max_values = {
+                "Maximum Frequency": convert_to_days(filtered_df['Maximum Frequency'].values[0]),
+                "Maximum FI Data Range": convert_to_days(filtered_df['Maximum FI Data Range'].values[0]),
+                "Maximum Consent Validity": convert_to_days(filtered_df['Maximum Consent Validity'].values[0]),
+                "Maximum Data Life": convert_to_days(filtered_df['Maximum Data Life'].values[0])
+            }
 
-        results = []
-        for key, input_value in input_values.items():
-            if input_value:
-                input_days = convert_to_days(input_value)
-                max_days = max_values[key]
-                if input_days > max_days:
-                    results.append(f"{key} exceeded: {input_days} days > {max_days} days")
-        
-        if results:
-            for res in results:
-                st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
-        else:
+            input_values = {
+                "Maximum Frequency": max_frequency,
+                "Maximum FI Data Range": max_fi_data_range,
+                "Maximum Consent Validity": max_consent_validity,
+                "Maximum Data Life": max_data_life
+            }
+
+            results = []
+            for key, input_value in input_values.items():
+                if input_value:
+                    input_days = convert_to_days(input_value)
+                    max_days = max_values[key]
+                    if input_days > max_days:
+                        results.append(f"{key} exceeded: {input_days} days > {max_days} days")
+
+            if results:
+                for res in results:
+                    st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
+            else:
+                st.success("All values are within limits.")
+
+    elif option == 'Create Consent':
+        st.write("### Create Consent")
+        with st.form(key='create_consent_form'):
+            purpose_code = st.text_input("Purpose Code")
+            purpose_text = st.text_area("Purpose Text")
+            max_frequency = st.text_input("Maximum Frequency")
+            max_fi_data_range = st.text_input("Maximum FI Data Range")
+            max_consent_validity = st.text_input("Maximum Consent Validity")
+            max_data_life = st.text_input("Maximum Data Life")
+            submit_consent = st.form_submit_button(label='Create Consent')
+
+        if submit_consent:
             consent_id = str(uuid.uuid4())
             consent_list.append({
                 'Consent ID': consent_id,
