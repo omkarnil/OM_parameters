@@ -126,7 +126,7 @@ else:
             if input_value:
                 input_days = convert_to_days(input_value)
                 max_days = convert_to_days(max_values[key])
-                if input_days is not None and max_days is not None and (max_days == 0 and input_days > 0 or input_days > max_days):
+                if input_days > max_days:
                     results.append(f"{key} exceeded: {input_value} > {max_values[key]}")
         
         if results:
