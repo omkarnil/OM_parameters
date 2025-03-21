@@ -34,7 +34,7 @@ def convert_to_days(value):
     }
     if value in conversions:
         return conversions[value]
-    match = re.match(r'^\d+\s*(days|months|years)$', value)
+    match = re.match(r'^(\d+)\s*(days|months|years)$', value)
     if match:
         number, unit = match.groups()
         return int(number) * unit_conversion[unit]
@@ -84,6 +84,10 @@ st.markdown("""
             margin-top: 40px;
             padding: 10px 0;
         }
+        .delete-button {
+            color: #d32f2f;
+            font-weight: bold;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -103,8 +107,7 @@ if filtered_df.empty:
 else:
     st.markdown('<div class="param-container">', unsafe_allow_html=True)
     st.write(f'### Parameters for OM Code: {om_code}')
-    for col, value in filtered_df.iloc[0].items():
-        st.markdown(f'<div class="param"><span class="param-title">{col}:</span> {value}</div>', unsafe_allow_html=True)
+    st.write(filtered_df)
     st.markdown('</div>', unsafe_allow_html=True)
 
     if option == 'Check Limit':
@@ -142,7 +145,7 @@ else:
 
                 if results:
                     for res in results:
-                        st.markdown(f'<div class="exceed">{res}</div>', unsafe_allow_html=True)
+                        st.error(res)
                 else:
                     st.success("All values are within limits.")
 
@@ -179,9 +182,10 @@ df_consent = pd.DataFrame(consent_list)
 if not df_consent.empty:
     st.write("### Consent List")
     for i, row in df_consent.iterrows():
-        st.table(pd.DataFrame([row]))
-        if st.button(f"Delete {row['Consent ID']}"):
-            if st.confirm(f"Are you sure you want to delete Consent ID {row['Consent ID']}?"):
+        col1, col2 = st.columns([4, 1])
+        col1.write(row)
+        if col2.button("Delete", key=f"delete_{row['Consent ID']}"):
+            if st.warning(f"Are you sure you want to delete Consent ID {row['Consent ID']}? This action cannot be undone."):
                 with st.spinner('Deleting consent...'):
                     consent_list = [c for c in consent_list if c['Consent ID'] != row['Consent ID']]
                     with open(json_path, 'w') as file:
