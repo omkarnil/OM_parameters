@@ -2,10 +2,20 @@ import streamlit as st
 import pandas as pd
 import re
 import uuid
+import json
+import os
 
 # Load the Excel sheet once
 excel_path = 'Consent Paramters.xlsx'
 df = pd.read_excel(excel_path)
+json_path = 'consents.json'
+
+# Load existing consents
+if os.path.exists(json_path):
+    with open(json_path, 'r') as file:
+        consent_list = json.load(file)
+else:
+    consent_list = []
 
 # Conversion factors
 unit_conversion = {
@@ -13,8 +23,6 @@ unit_conversion = {
     'months': 30,
     'years': 365
 }
-
-consent_list = []
 
 def convert_to_days(value):
     value = str(value).strip().lower()
@@ -158,6 +166,8 @@ else:
                 'Maximum Consent Validity': max_consent_validity,
                 'Maximum Data Life': max_data_life
             })
+            with open(json_path, 'w') as file:
+                json.dump(consent_list, file, indent=4)
             st.success(f"Consent Created Successfully! Consent ID: {consent_id}")
 
     elif option == 'Delete Consent':
@@ -166,6 +176,8 @@ else:
         consent_to_delete = st.selectbox("Select Consent ID to Delete", consent_ids)
         if st.button("Delete Consent"):
             consent_list = [c for c in consent_list if c['Consent ID'] != consent_to_delete]
+            with open(json_path, 'w') as file:
+                json.dump(consent_list, file, indent=4)
             st.success(f"Consent ID {consent_to_delete} deleted successfully.")
 
 # Display consent list
@@ -175,3 +187,4 @@ if consent_list:
 
 # Footer
 st.markdown('<div class="footer">Created with ❤️ by bored Omkarni</div>', unsafe_allow_html=True)
+
